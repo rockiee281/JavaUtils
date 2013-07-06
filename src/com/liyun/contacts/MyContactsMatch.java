@@ -62,22 +62,28 @@ public class MyContactsMatch {
 														// char
 						return true;
 					}
-				} else {
-					if (startBaseWordIndex == baseWords.length - 1
-							|| baseCharArray[startBaseWordIndex + 1][0] != targetChar[tIndex]) {// 如果已经到了最后一个词或者下一个单词的首字母和当前并不匹配
+				} else { // 当前不匹配的情况
 
-						if (tIndex > 0
-								&& targetChar[tIndex - 1] == baseCharArray[wordIndex][0]) {
+					if (startBaseWordIndex == baseWords.length - 1) {
+						// 已经到最后一个词，并且未能匹配，则肯定不能匹配
+						return false;
+					} else if (matchPositions[wordIndex] > 0) { // 当前词已经匹配过，则跳到下个word
+						break;
+					} else if (tIndex > 0 && targetChar[tIndex - 1] == baseCharArray[startBaseWordIndex + 1][0]) {
+						/*
+						 * 当前词未匹配，但是后向纠错可以匹配 比如 “zhang hao
+						 * feng”在输入“zhf”时，zh会首先匹配到zhang，当f匹配到hao时发生错误
+						 * 此时需要将f前面的h做后向纠错以正确的匹配
+						 * 此种情况适用于h会出现在zh\ch\sh特殊声母，以及n、g这种会同时出现在声母及韵母的字母
+						 */
+
+						if (tIndex > 0 && targetChar[tIndex - 1] == baseCharArray[wordIndex][0]) {
 							matchPositions[wordIndex] = 1;
-							/**
-							 * 增加后向纠错,因为类似h这种字母，既可以作为前一个单词的声母组成部分，也可以作为本单词的声母
-							 * 
-							 * */
 							break;
 						}
-
 					} else {
-						break; // match failed， skip to next word
+						// 本次匹配失败
+						return false; 
 					}
 
 				}
@@ -108,8 +114,7 @@ public class MyContactsMatch {
 		if (aLen == 0 || bLen == 0) {
 			return "";
 		} else if (a.charAt(aLen - 1) == b.charAt(bLen - 1)) {
-			return lcs(a.substring(0, aLen - 1), b.substring(0, bLen - 1))
-					+ a.charAt(aLen - 1);
+			return lcs(a.substring(0, aLen - 1), b.substring(0, bLen - 1)) + a.charAt(aLen - 1);
 		} else {
 			String x = lcs(a, b.substring(0, bLen - 1));
 			String y = lcs(a.substring(0, aLen - 1), b);
