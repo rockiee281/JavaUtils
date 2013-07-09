@@ -16,7 +16,7 @@ public class MyContactsMatch {
 	private char[][][] baseCharArrayPerWord; // 保存联系人按照char拆分之后的信息，中文多音字最多匹配
 	private final static int WORDTYPE_CHINESE = 1;
 	private final static int WORDTYPE_NO_CHINESE = 0;
-	private int currentMatchCursor = -1; // 保存当前匹配到的单词游标
+	private int currentMatchCursor; // 保存当前匹配到的单词游标
 	private int tIndex = 0; // 记录用户输入词目前的匹配位置
 
 	public MyContactsMatch(String base, String target) {
@@ -43,9 +43,22 @@ public class MyContactsMatch {
 				}
 				wordList.add(pinyin);
 				wordTypeList.add(WORDTYPE_CHINESE); // 中文
+			} else if (tmpCharArray[i] == ' '){
+				// 遇到空格自动分割词
+				if(notChineseChar.length() > 0){
+					String[] notChinese = new String[1];
+					notChinese[0] = notChineseChar.toString();
+					wordList.add(notChinese);
+					notChineseChar.delete(0, notChineseChar.length());
+					wordTypeList.add(WORDTYPE_NO_CHINESE); // 非中文
+				} else {
+					continue;
+				}
 			} else {
-				notChineseChar.append(baseCharArrayPerWord[i]);
-			}
+				notChineseChar.append(tmpCharArray[i]);
+			} 
+				
+			
 		}
 
 		if (notChineseChar.length() > 0) { // 最后以字母等结尾
@@ -53,6 +66,7 @@ public class MyContactsMatch {
 			notChinese[0] = notChineseChar.toString();
 			wordList.add(notChinese);
 			notChineseChar.delete(0, notChineseChar.length());
+			wordTypeList.add(WORDTYPE_NO_CHINESE);
 		}
 
 		// 得到处理后的word数组以及word类型数组
@@ -74,12 +88,16 @@ public class MyContactsMatch {
 	}
 
 	public boolean check() {
-
+		currentMatchCursor = -1;
+		int wordLength = 0;
 		for (int i = 0; i < baseWords.length; i++) {
 			if (checkSub(i)) {
 				return true;
 			}
-			matchWordPositions = new int[baseWords.length];
+			matchWordPositions = new int[base.length()];
+
+			wordLength = (wordType[i] == WORDTYPE_NO_CHINESE) ? wordLength + baseWords[i].length : wordLength + 1;
+			currentMatchCursor = wordLength - 1;
 		}
 
 		return false;
@@ -88,7 +106,7 @@ public class MyContactsMatch {
 	public void printMatch() {
 
 		StringBuilder sb = new StringBuilder();
-		char[] baseChars = base.toCharArray();
+		char[] baseChars = base.replaceAll(" ", "").toCharArray();
 		for (int i = 0; i < baseChars.length; i++) {
 			if (matchWordPositions[i] > 0) {
 				sb.append("<m>" + baseChars[i] + "</m> ");
@@ -114,12 +132,13 @@ public class MyContactsMatch {
 			boolean checkResult = false;
 			if (myWordType == WORDTYPE_NO_CHINESE) {
 				// 本词为非中文时的初始化工作
-				wordLength = baseCharOfWord.length;
+				wordLength = baseCharOfWord[0].length;
 				checkResult = checkWord(baseCharOfWord[0], WORDTYPE_NO_CHINESE, wordIndex);
 			} else {
 				// 本词为中文时的初始化工作
 				currentMatchCursor++; // 游标位置退后一位
 				int initTIndex = tIndex; // 记录初始的tIndex，方便匹配失败的时候回到初始值
+				int tmpMatchCursor = currentMatchCursor;
 				for (int multiIndex = 0; multiIndex < baseCharOfWord.length; multiIndex++) {
 					char[] charOfWord = baseCharOfWord[multiIndex];
 					if (checkWord(charOfWord, WORDTYPE_CHINESE, wordIndex)) {
@@ -129,6 +148,7 @@ public class MyContactsMatch {
 					} else {
 						// 匹配失败
 						tIndex = initTIndex;
+						currentMatchCursor = tmpMatchCursor;
 					}
 				}
 			}
@@ -137,6 +157,10 @@ public class MyContactsMatch {
 				return false;
 			}
 
+			if (tIndex == targetChar.length) { // match all the target
+				// char
+				return true;
+			}
 			currentMatchCursor = initCursor + wordLength;
 		}
 		return false;
@@ -165,18 +189,18 @@ public class MyContactsMatch {
 					return false;
 				} else if (matchThisWord) { // 当前词已经匹配过，则跳到下个word
 					return true;
-				} else if (tIndex > 0 && targetChar[tIndex - 1] == baseCharArrayPerWord[startBaseWordIndex + 1][0]) {
+				} else if (tIndex > 0 && targetChar[tIndex - 1] == baseCharOfWord[charIndex]) {
 					/*
 					 * 当前词未匹配，但是后向纠错可以匹配 比如 “zhang hao
 					 * feng”在输入“zhf”时，zh会首先匹配到zhang，当f匹配到hao时发生错误
 					 * 此时需要将f前面的h做后向纠错以正确的匹配
 					 * 此种情况适用于h会出现在zh\ch\sh特殊声母，以及n、g这种会同时出现在声母及韵母的字母
+					 * 考虑到多音字的情形，需要把
 					 */
 
-					if (tIndex > 0 && targetChar[tIndex - 1] == baseCharArrayPerWord[wordIndex][0]) {
-						matchWordPositions[wordIndex] = 1;
-						break;
-					}
+					matchWordPositions[currentMatchCursor] = 1;
+					matchThisWord = true;
+					continue;
 				} else {
 					// 本次匹配失败
 					return false;
@@ -184,6 +208,7 @@ public class MyContactsMatch {
 			}
 		}
 
+		return false;
 	}
 
 	public static void main(String[] args) {

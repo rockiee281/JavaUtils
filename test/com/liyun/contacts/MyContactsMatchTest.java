@@ -24,7 +24,7 @@ public class MyContactsMatchTest {
 		m.printMatch();
 		
 		m = new MyContactsMatch("张长志", "zhz");
-		Assert.assertTrue(!m.check());
+		Assert.assertTrue(m.check());
 		m.printMatch();
 		
 		m = new MyContactsMatch("张航志", "zhz");
