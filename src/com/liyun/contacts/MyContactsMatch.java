@@ -41,11 +41,14 @@ public class MyContactsMatch {
 					notChineseChar.delete(0, notChineseChar.length());
 					wordTypeList.add(WORDTYPE_NO_CHINESE); // 非中文
 				}
-				wordList.add(pinyin);
-				wordTypeList.add(WORDTYPE_CHINESE); // 中文
-			} else if (tmpCharArray[i] == ' '){
+				
+				if (pinyin != null){	// 部分中文符号在处理时会返回null
+					wordList.add(pinyin);
+					wordTypeList.add(WORDTYPE_CHINESE); // 中文
+				}
+			} else if (tmpCharArray[i] == ' ') {
 				// 遇到空格自动分割词
-				if(notChineseChar.length() > 0){
+				if (notChineseChar.length() > 0) {
 					String[] notChinese = new String[1];
 					notChinese[0] = notChineseChar.toString();
 					wordList.add(notChinese);
@@ -56,9 +59,8 @@ public class MyContactsMatch {
 				}
 			} else {
 				notChineseChar.append(tmpCharArray[i]);
-			} 
-				
-			
+			}
+
 		}
 
 		if (notChineseChar.length() > 0) { // 最后以字母等结尾
@@ -116,6 +118,7 @@ public class MyContactsMatch {
 		}
 		System.out.println(target + "|" + sb);
 	}
+	
 
 	private boolean checkSub(int startBaseWordIndex) {
 
