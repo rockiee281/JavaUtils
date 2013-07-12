@@ -21,7 +21,7 @@ public class ItemBaseCF {
 		RecommenderIRStatsEvaluator evaluator = new GenericRecommenderIRStatsEvaluator();
 		// RandomUtils.useTestSeed();
 		RecommenderBuilder builder = new RecommenderBuilder() {
-			char similarityPattern = 'E';// 'E' or 'P' or 'L' or 'T'
+			char similarityPattern = 'L';// 'E' or 'P' or 'L' or 'T'
 
 			@Override
 			public Recommender buildRecommender(DataModel dm) throws TasteException {

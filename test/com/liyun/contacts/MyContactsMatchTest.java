@@ -42,5 +42,9 @@ public class MyContactsMatchTest {
 		m = new MyContactsMatch("张 hang zhi", "zhz");
 		Assert.assertTrue(m.check());
 		m.printMatch();
+		
+		m = new MyContactsMatch("张国荣", "zhangg");
+		Assert.assertTrue(m.check());
+		m.printMatch();
 	}
 }
