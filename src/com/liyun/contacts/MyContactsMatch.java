@@ -8,20 +8,18 @@ import com.liyun.util.PinyinUtil;
 public class MyContactsMatch {
 	private String base;
 
-	private String target;
 	private String[][] baseWords;
 	private int[] matchWordPositions;
 	private Integer[] wordType; // 联系人字符类型,1为中文，否则为非中文
-	private char[] targetChar;
 	private char[][][] baseCharArrayPerWord; // 保存联系人按照char拆分之后的信息，中文多音字最多匹配
 	private final static int WORDTYPE_CHINESE = 1;
 	private final static int WORDTYPE_NO_CHINESE = 0;
 	private int currentMatchCursor; // 保存当前匹配到的单词游标
 	private int tIndex = 0; // 记录用户输入词目前的匹配位置
+	private char[] targetChar;
 
-	public MyContactsMatch(String base, String target) {
+	public MyContactsMatch(String base) {
 		this.base = base;
-		this.target = target;
 		init();
 	}
 
@@ -41,8 +39,8 @@ public class MyContactsMatch {
 					notChineseChar.delete(0, notChineseChar.length());
 					wordTypeList.add(WORDTYPE_NO_CHINESE); // 非中文
 				}
-				
-				if (pinyin != null){	// 部分中文符号在处理时会返回null
+
+				if (pinyin != null) { // 部分中文符号在处理时会返回null
 					wordList.add(pinyin);
 					wordTypeList.add(WORDTYPE_CHINESE); // 中文
 				}
@@ -78,7 +76,6 @@ public class MyContactsMatch {
 		// 初始化匹配数组
 		matchWordPositions = new int[base.length()];
 
-		targetChar = target.toCharArray();
 		baseCharArrayPerWord = new char[baseWords.length][][];
 		for (int i = 0; i < baseWords.length; i++) {
 			baseCharArrayPerWord[i] = new char[baseWords[i].length][];
@@ -89,9 +86,10 @@ public class MyContactsMatch {
 
 	}
 
-	public boolean check() {
+	public boolean check(String target) {
 		currentMatchCursor = -1;
 		int wordLength = 0;
+		targetChar = target.toCharArray();
 		for (int i = 0; i < baseWords.length; i++) {
 			if (checkSub(i)) {
 				return true;
@@ -116,9 +114,7 @@ public class MyContactsMatch {
 				sb.append(baseChars[i] + " ");
 			}
 		}
-		System.out.println(target + "|" + sb);
 	}
-	
 
 	private boolean checkSub(int startBaseWordIndex) {
 
@@ -190,9 +186,25 @@ public class MyContactsMatch {
 				if (wordIndex == baseWords.length - 1) {
 					// 已经到最后一个词，并且未能匹配，则肯定不能匹配
 					return false;
-				} else if (matchThisWord) { // 当前词已经匹配过，则跳到下个word
-					return true;
-				} else if (tIndex > 0 && targetChar[tIndex - 1] == baseCharOfWord[charIndex]) {
+				} else if (matchThisWord) {
+					if (wordType == WORDTYPE_NO_CHINESE) {
+						return true;
+					}
+					// 当前词已经匹配过
+					// 需要屏蔽到张国荣 被zhan g r匹配到的情况，如果匹配则必须是全拼匹配或者完整匹配声母
+					// 如果是匹配声母则跳到下个字，否则返回false
+					if (charIndex == 1) {
+						// 匹配首字母
+						return true;
+					} else if (charIndex == 2 && targetChar[tIndex - 1] == 'h') { //
+						// 首字母两位的情况
+						return true;
+					} else {
+						return false;
+					}
+
+				} else if (tIndex > 0 && targetChar[tIndex - 1] == baseCharOfWord[charIndex]
+						&& targetChar[tIndex - 1] == 'h') {
 					/*
 					 * 当前词未匹配，但是后向纠错可以匹配 比如 “zhang hao
 					 * feng”在输入“zhf”时，zh会首先匹配到zhang，当f匹配到hao时发生错误
@@ -212,19 +224,5 @@ public class MyContactsMatch {
 		}
 
 		return true;
-	}
-
-	public static void main(String[] args) {
-		MyContactsMatch m = new MyContactsMatch("zhang chang zhi", "zhcz");
-		System.out.println(m.check());
-		m.printMatch();
-
-		m = new MyContactsMatch("zhang chang zhi", "zhcg");
-		System.out.println(m.check());
-		m.printMatch();
-
-		m = new MyContactsMatch("zhang chang zhi", "zhgz");
-		System.out.println(m.check());
-		m.printMatch();
 	}
 }

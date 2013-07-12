@@ -7,44 +7,50 @@ public class MyContactsMatchTest {
 
 	@Test
 	public void testLCS1() {
-		MyContactsMatch m = new MyContactsMatch("张长志", "zhcz");
-		Assert.assertTrue(m.check());
+		MyContactsMatch m = new MyContactsMatch("张长志");
+		Assert.assertTrue(m.check("zhcz"));
 		m.printMatch();
 
-		m = new MyContactsMatch("张长志", "zhcg");
-		Assert.assertTrue(!m.check());
+		Assert.assertTrue(!m.check("zhcg"));
 		m.printMatch();
 
-		m = new MyContactsMatch("张长志", "zhgz");
-		Assert.assertTrue(!m.check());
+		Assert.assertTrue(!m.check("zhgz"));
 		m.printMatch();
 
-		m = new MyContactsMatch("张长志", "zhch");
-		Assert.assertTrue(m.check());
-		m.printMatch();
-		
-		m = new MyContactsMatch("张长志", "zhz");
-		Assert.assertTrue(m.check());
-		m.printMatch();
-		
-		m = new MyContactsMatch("张航志", "zhz");
-		Assert.assertTrue(m.check());
-		m.printMatch();
-		
-		m = new MyContactsMatch("张hang志", "zhz");
-		Assert.assertTrue(m.check());
+		Assert.assertTrue(m.check("zhch"));
 		m.printMatch();
 
-		m = new MyContactsMatch("张 hang 志", "zhz");
-		Assert.assertTrue(m.check());
+		Assert.assertTrue(m.check("zhz"));
 		m.printMatch();
 
-		m = new MyContactsMatch("张 hang zhi", "zhz");
-		Assert.assertTrue(m.check());
+		m = new MyContactsMatch("张航志");
+		Assert.assertTrue(m.check("zhz"));
 		m.printMatch();
-		
-		m = new MyContactsMatch("张国荣", "zhangg");
-		Assert.assertTrue(m.check());
+
+		m = new MyContactsMatch("张hang志");
+		Assert.assertTrue(m.check("zhz"));
+		m.printMatch();
+
+		m = new MyContactsMatch("张 hang 志");
+		Assert.assertTrue(m.check("zhz"));
+		m.printMatch();
+
+		// TODO this should be matched !
+		// Assert.assertTrue(m.check("zhangz"));
+		// m.printMatch();
+
+		m = new MyContactsMatch("张 hang zhi");
+		Assert.assertTrue(m.check("zhz"));
+		m.printMatch();
+
+		m = new MyContactsMatch("张国荣");
+		Assert.assertTrue(m.check("zhangg"));
+		m.printMatch();
+
+		Assert.assertTrue(!m.check("zhangr"));
+		m.printMatch();
+
+		Assert.assertTrue(m.check("zhgr"));
 		m.printMatch();
 	}
 }
