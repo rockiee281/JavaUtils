@@ -68,6 +68,14 @@ public class MyContactsMatchTest {
 		m = new MyContactsMatch("zhang gao ren");
 		Assert.assertTrue(!m.check("zhangao"));
 		m.printMatch("zhangao");
+		
+		m = new MyContactsMatch("zhang hao an");
+		Assert.assertTrue(m.check("zhan"));
+		m.printMatch("zhan");
+		
+		m = new MyContactsMatch("zhang an");
+		Assert.assertTrue(m.check("zhan"));
+		m.printMatch("zhan");
 
 	}
 }

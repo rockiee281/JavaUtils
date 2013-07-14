@@ -190,11 +190,15 @@ public class MyContactsMatch {
 			}
 
 			if (baseCharOfWord[charIndex] == targetChar[status.tIndex]) {
-				if (charIndex == 1 && wordIndex < baseCharOfWord.length - 1) { // 匹配的char非声母第一位,且后面还有待匹配的单词，尝试进行最大匹配
+				if ((charIndex == 1 || (charIndex == 2 && targetChar[status.tIndex - 1] == 'h')) && wordIndex < baseCharOfWord.length - 1) { // 匹配的char非声母第一位,且后面还有待匹配的单词，尝试进行最大匹配
 					for (char[] c : baseCharArrayPerWord[wordIndex + 1]) {
 						if (c[0] == targetChar[status.tIndex]) {
 							// 需要匹配的词和下个单词的第一位声母匹配，进行最大匹配尝试
 							MatchStatus maxMatchStatus = (MatchStatus) status.clone();
+							if (wordType == WORDTYPE_NO_CHINESE) {
+								maxMatchStatus.currentMatchCursor = maxMatchStatus.currentMatchCursor + baseCharOfWord.length - charIndex - 1;
+							}
+
 							stack.push(maxMatchStatus);
 							if (checkFromWordIndex(wordIndex + 1)) {
 								return true;
@@ -268,7 +272,6 @@ public class MyContactsMatch {
 		int currentMatchCursor; // 保存当前匹配到的单词游标
 		int tIndex = 0; // 记录用户输入词目前的匹配位置
 		int[] matchWordPositions;
-		int lastMatchCharIndexOfWord; // 上次匹配到的word的位置
 
 		@Override
 		protected Object clone() {
@@ -276,7 +279,6 @@ public class MyContactsMatch {
 			status.tIndex = this.tIndex;
 			status.currentMatchCursor = this.currentMatchCursor;
 			status.matchWordPositions = Arrays.copyOf(this.matchWordPositions, this.matchWordPositions.length);
-			status.lastMatchCharIndexOfWord = this.lastMatchCharIndexOfWord;
 			return status;
 		}
 	}
