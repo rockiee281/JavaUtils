@@ -232,7 +232,7 @@ public class MyContactsMatch {
 					if (charIndex == 1) {
 						// 匹配首字母
 						return true;
-					} else if (charIndex == 2 && targetChar[status.tIndex - 1] == 'h') { //
+					} else if (charIndex == 2 && (targetChar[status.tIndex - 1] == 'h' || targetChar[status.tIndex - 1] == 'n')) { //
 						// 首字母两位的情况
 						return true;
 					} else {
@@ -259,11 +259,6 @@ public class MyContactsMatch {
 		}
 
 		return true;
-	}
-
-	private boolean isMultiTypeChar(char c) {
-		// TODO Auto-generated method stub
-		return false;
 	}
 
 	/**
