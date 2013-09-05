@@ -1,5 +1,12 @@
 package com.liyun.homelinkSpider;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -29,10 +36,11 @@ import org.jsoup.select.Elements;
 public class HomeSpider {
 	// 抓取起始页，链家二手房首页
 	private final String START_PAGE_URL = "http://beijing.homelink.com.cn/ershoufang/";
-	private final int UPPER_COST = 215; // 能承受的最高总价
+	public final static int UPPER_COST = 215; // 能承受的最高总价
 	private final Log logger = LogFactory.getLog(getClass());
 	private ExecutorService service;
-	private final String HOST = "http://beijing.homelink.com.cn/";
+	public final static String HOST = "http://beijing.homelink.com.cn/";
+	private final ConcurrentLinkedQueue<String> queue = new ConcurrentLinkedQueue<String>();
 
 	public HomeSpider() {
 		service = Executors.newFixedThreadPool(5); // 5个线程抓取数据
@@ -41,6 +49,11 @@ public class HomeSpider {
 	public void crawler() {
 		HttpClient httpClient = new DefaultHttpClient();
 		String content = getPageContent(httpClient, START_PAGE_URL);
+
+		// 启动监听线程
+		WriteFileThread writeFile = new WriteFileThread();
+		Thread thread = new Thread(writeFile);
+		thread.start();
 
 		boolean hasNextPage = true;
 
@@ -66,12 +79,13 @@ public class HomeSpider {
 			}
 
 		} while (hasNextPage);
-		
-		try{
-			if(service.awaitTermination(1l,TimeUnit.HOURS)){	// 超时时间
+
+		try {
+			if (service.awaitTermination(1l, TimeUnit.HOURS)) { // 超时时间
 				// do something
+				writeFile.stop();
 			}
-		}catch (Exception e) {
+		} catch (Exception e) {
 			logger.error("任务超时", e);
 		}
 	}
@@ -81,6 +95,8 @@ public class HomeSpider {
 		ResponseHandler<String> rspHandler = new BasicResponseHandler();
 		try {
 			String content = httpClient.execute(get, rspHandler);
+			logger.info("get page : " + url);
+
 			if (StringUtils.isEmpty(content)) {
 				logger.error("抓取页面失败,url=" + START_PAGE_URL);
 				return null;
@@ -96,49 +112,64 @@ public class HomeSpider {
 		Elements houseList = doc.getElementById("listData").children();
 		for (Element element : houseList) {
 			try {
-				Element priceEle = element.select("div.price").first();
-				String price = priceEle.select("ul").first().select("b").text();
-				float priceVal = Float.valueOf(price);
-				if (priceVal > UPPER_COST) {
-					// 总价超了，买不起，放弃…………
-					continue;
-				}
-				HouseDetail house = new HouseDetail();
-				house.setTotalPrice(priceVal);
-
-				float avgPrice = Float.valueOf(priceEle.select("p").text().replaceAll("[^0-9.]", ""));
-				house.setAvgPrice(avgPrice);
-
-				Element title = element.select("h3").first().select("a").first();
-				house.setLink(HOST + title.attr("href"));
-				house.setTitle(title.text());
-				
-				Element content = element.select("div.content").first();
-				house.setDistrict(content.select("li.one").first().text());
-				house.setApartment(content.select("li.two").first().text());
-				String acreage = content.select("li.three").first().text();
-				house.setAcreages(Float.valueOf(acreage.replaceAll("[^0-9.]", "")));
-				String desc = content.select("p.clearfix").first().html();
-				String[] info = desc.split("<br />");
-				String[] detail1 = info[0].split(",");
-				house.setFloor(detail1[0]);
-				house.setDirection(detail1[1]);
-				house.setDecoration(detail1[2]);
-				String[] detail2 = info[1].split(",");
-				house.setBuild(detail2[0]);
-				house.setYear(detail2[1]);
-				house.setType(detail2[2]);
-				
-				HomeLinkeDetailPageTask task = new HomeLinkeDetailPageTask(house);
+				HomeLinkeDetailPageTask task = new HomeLinkeDetailPageTask(element, queue);
 				service.execute(task);
 			} catch (Exception e) {
 				logger.error("处理数据失败，" + element, e);
 			}
 		}
 	}
-	
+
 	public static void main(String[] args) {
 		HomeSpider spider = new HomeSpider();
 		spider.crawler();
+	}
+
+	/**
+	 * 内部类，用于写入文件
+	 * */
+	class WriteFileThread implements Runnable {
+		private boolean hasMore = true;
+		private BufferedWriter out;
+
+		@Override
+		public void run() {
+			try {
+				SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+				String today = sdf.format(new Date());
+				out = new BufferedWriter(new FileWriter(new File(today)));
+			} catch (Exception e) {
+				logger.error("创建文件失败", e);
+				return;
+			}
+
+			while (hasMore) {
+				while (!queue.isEmpty()) {
+					try {
+						out.append(queue.poll() + "\n");
+					} catch (IOException e) {
+						logger.error("写入文件失败", e);
+					}
+				}
+
+				try {
+					Thread.sleep(10 * 1000);// 休眠10s
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+
+			if (out != null) {
+				try {
+					out.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+
+		public void stop() {
+			this.hasMore = false;
+		}
 	}
 }

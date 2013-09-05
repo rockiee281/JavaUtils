@@ -15,6 +15,24 @@ public class HouseDetail {
 	private String floor;// 楼层
 	private String decoration; // 装修
 	private String build; // 所处楼
+	private String id; // 房屋ID
+	private String[] specifyInfo; // 房屋特性描述
+
+	public String getId() {
+		return id;
+	}
+
+	public void setId(String id) {
+		this.id = id;
+	}
+
+	public String[] getSpecifyInfo() {
+		return specifyInfo;
+	}
+
+	public void setSpecifyInfo(String[] specifyInfo) {
+		this.specifyInfo = specifyInfo;
+	}
 
 	public String getFloor() {
 		return floor;
