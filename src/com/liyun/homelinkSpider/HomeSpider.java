@@ -2,8 +2,9 @@ package com.liyun.homelinkSpider;
 
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -53,6 +54,7 @@ public class HomeSpider {
 		// 启动监听线程
 		WriteFileThread writeFile = new WriteFileThread();
 		Thread thread = new Thread(writeFile);
+		thread.setName("file-writer-thread");
 		thread.start();
 
 		boolean hasNextPage = true;
@@ -81,6 +83,7 @@ public class HomeSpider {
 		} while (hasNextPage);
 
 		try {
+			service.shutdown();	// 主动关闭线程池，会在执行所有任务之后关闭
 			if (service.awaitTermination(1l, TimeUnit.HOURS)) { // 超时时间
 				// do something
 				writeFile.stop();
@@ -142,14 +145,15 @@ public class HomeSpider {
 				if (!dir.exists()) {
 					dir.mkdir();
 				}
-				out = new BufferedWriter(new FileWriter(new File("homelinkData/" + today)));
+				out = new BufferedWriter(new OutputStreamWriter(
+						new FileOutputStream(new File("homelinkData/" + today)), "utf-8"));
 			} catch (Exception e) {
 				logger.error("创建文件失败", e);
 				return;
 			}
 
 			while (hasMore) {
-				while (!queue.isEmpty()) {
+				if (!queue.isEmpty()) {
 					try {
 						out.append(queue.poll() + "\n");
 					} catch (IOException e) {
@@ -158,7 +162,7 @@ public class HomeSpider {
 				}
 
 				try {
-					Thread.sleep(10 * 1000);// 休眠10s
+					Thread.sleep(1 * 1000);// 休眠1s
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
