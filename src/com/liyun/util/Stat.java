@@ -79,5 +79,6 @@ public class Stat {
 			writer.write(key + "," + appCount.get(key)+"\n");
 		}
 		writer.close();
+		reader.close();
 	}
 }
