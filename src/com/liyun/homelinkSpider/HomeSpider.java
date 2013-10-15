@@ -3,6 +3,7 @@ package com.liyun.homelinkSpider;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.text.SimpleDateFormat;
@@ -140,7 +141,7 @@ public class HomeSpider {
 			try {
 				SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 				String today = sdf.format(new Date());
-
+				out = new BufferedWriter(new FileWriter(new File(today)));
 				File dir = new File("homelinkData");
 				if (!dir.exists()) {
 					dir.mkdir();
